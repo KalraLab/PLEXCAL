@@ -1,2 +1,2 @@
 # PLEXCAL
-[![Architecture diagram of dhanumjayareddy/plexcal](https://gitdiagram.com/dhanumjayareddy/plexcal/diagram.png)](https://gitdiagram.com/dhanumjayareddy/plexcal?utm_source=readme&utm_medium=picture)
+<img width="7247" height="5293" alt="diagram" src="https://github.com/user-attachments/assets/30527983-fa6e-45d3-aff0-819fd607f60a" />
