@@ -14,7 +14,7 @@ from urllib.request import Request, urlopen
 
 
 ROOT = Path(__file__).resolve().parent
-CSV_FILE = ROOT / "RCSB_MASTER_DATA_EXPANDED_ANNOTATED.csv"
+STATIC_ROOT = ROOT / "src"
 MAX_PDB_UPLOAD_BYTES = 25 * 1024 * 1024
 COHERENT_PAIR_METRICS = (
     "diffusion_length_angstrom",
@@ -499,7 +499,7 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
                 temporary_file.write(pdb_bytes)
                 temporary_path = Path(temporary_file.name)
 
-            from process_single_pdb import process_single_pdb
+            from src.calculate_fret_diffusion_lengths import process_single_pdb
 
             fret_result = process_single_pdb(temporary_path)
             if not isinstance(fret_result, dict):
@@ -527,7 +527,7 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
                     )
                 return
 
-            from det_code_clean import process_single_pdb as process_det_pdb
+            from src.calcalculate_det_diffusion_lengths import process_single_pdb as process_det_pdb
 
             det_result = process_det_pdb(temporary_path)
             if not isinstance(det_result, dict):
@@ -567,6 +567,8 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
                 or det_metrics["diffusion_length_angstrom"] is None
             )
             self.send_json(422 if failed else 200, response)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            self.close_connection = True
         except (OSError, ImportError, TypeError, ValueError) as error:
             self.send_json(
                 500, {"error": f"Could not run the requested calculation: {error}"}
@@ -584,7 +586,7 @@ def main():
     parser.add_argument("--port", type=int, default=8000)
     args = parser.parse_args()
 
-    handler = partial(PDBRequestHandler, directory=str(ROOT))
+    handler = partial(PDBRequestHandler, directory=str(STATIC_ROOT))
     server = ThreadingHTTPServer((args.host, args.port), handler)
     print(f"Serving Plexcal structure analysis at http://{args.host}:{args.port}")
     try:

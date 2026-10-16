@@ -8,14 +8,12 @@ import os
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
-# Keep these two modules side-by-side with this script:
-#   process_single_pdb.py  -> FRET calculation
-#   det_code_clean.py      -> DET calculation
-from process_single_pdb import process_single_pdb as process_fret_pdb
-from det_code_clean import process_single_pdb as process_det_pdb
+# Keep the calculation modules side-by-side with this script.
+from .calculate_fret_diffusion_lengths import process_single_pdb as process_fret_pdb
+from .calcalculate_det_diffusion_lengths import process_single_pdb as process_det_pdb
 
 
-PDB_DIRECTORY = Path(r"D:\DJREDDY\EGFR Isha\EGFR_mutants_20260903")
+PDB_DIRECTORY = Path(__file__).resolve().parent.parent / "all_proteins_pdb"
 DEFAULT_WORKERS = max(1, min(4, os.cpu_count() or 1))
 
 

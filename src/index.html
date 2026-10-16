@@ -54,7 +54,7 @@
                     </div>
 
                     <label for="structureSource">Source</label>
-                    <select id="structureSource" name="source">
+                    <select id="structureSource" name="inputSource">
                         <option value="upload">Upload a PDB file</option>
                         <option value="rcsb">RCSB Protein Data Bank</option>
                         <option value="alphafold">AlphaFold Protein Structure Database</option>
@@ -62,12 +62,12 @@
 
                     <div id="uploadSourceFields">
                         <label for="pdbFile">PDB coordinate file</label>
-                        <input type="file" id="pdbFile" name="pdb_file" accept=".pdb,.ent">
+                        <input type="file" id="pdbFile" name="pdbFile" accept=".pdb,.ent">
                     </div>
                     <div id="identifierSourceFields" class="hidden">
                         <label for="structureIdentifier" id="structureIdentifierLabel">RCSB PDB ID</label>
                         <div class="identifier-input-row">
-                            <input type="text" id="structureIdentifier" name="structure_id" autocomplete="off" placeholder="e.g. 1TUB">
+                            <input type="text" id="structureIdentifier" name="structureId" autocomplete="off" placeholder="e.g. 1TUB">
                             <button type="button" id="loadStructurePreview" class="secondary-button" title="Loads the PDB structure and available details in the viewer; it does not calculate diffusion lengths." aria-label="Preview structure without calculating diffusion lengths">Preview</button>
                         </div>
                         <p class="field-hint" id="structureIdentifierHint">Enter a four-character PDB accession.</p>
@@ -301,6 +301,6 @@
         </div>
     </div>
 
-    <script src="fret_upload.js"></script>
+    <script src="fret_upload.js" defer></script>
 </body>
 </html>

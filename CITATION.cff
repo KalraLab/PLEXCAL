@@ -1,0 +1,31 @@
+cff-version: 1.2.0
+message: >-
+  If you use Plexcal, please cite this software using the metadata below.
+title: "Plexcal: Structure-Aware Estimation of Photo Excitation Energy-Transfer Diffusion Lengths"
+type: software
+authors:
+  - family-names: Bhavanam
+    given-names: "Dhanumjaya Reddy"
+    affiliation: "Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi, India"
+  - family-names: Rawat
+    given-names: "Kushal Singh"
+    affiliation: "Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi, India"
+  - family-names: Kalra
+    given-names: "Aarat P."
+    affiliation: "Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi, India"
+    affiliation: "Amar Nath and Shashi Khosla School of Information Technology, Indian Institute of Technology Delhi, New Delhi, India"
+    affiliation: "Department of Biomedical Engineering, All India Institute of Medical Sciences, New Delhi, India"
+    email: "aaratkalra@iitd.ac.in"
+repository-code: "https://github.com/KalraLab/PLEXCAL"
+license: "PolyForm-Noncommercial-1.0.0"
+keywords:
+  - Plexcal
+  - FRET
+  - Dexter energy transfer
+  - protein structure
+  - kinetic Monte Carlo
+  - energy migration
+abstract: >-
+  Plexcal is a structure-aware scientific software tool for estimating photo excitation
+  energy-transfer diffusion lengths from protein structures using implemented
+  FRET- and Dexter-related models.

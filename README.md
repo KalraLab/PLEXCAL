@@ -34,26 +34,25 @@ Open the URL displayed in the terminal, usually:
 To process structures in `all_proteins_pdb/`, run:
 
 ```bash
-python process_all_pdbs.py
+python -m src.process_all_pdbs
 ```
 
-The script uses up to four worker processes by default and saves results to `all_proteins_pdb/diffusion_lengths.csv`. To specify the number of workers:
+The script uses up to four worker processes by default and saves results to `all_proteins_pdb/fret_det_diffusion_lengths.csv`. To specify the number of workers:
 
 ```bash
-python process_all_pdbs.py --workers 2
+python -m src.process_all_pdbs --workers 2
 ```
 
 ## Additional Documentation
 
-- `PROCESS_SINGLE_PDB.md` — FRET workflow, equations, physical model, and limitations.
-- `DET_CODE_CLEAN.md` — DET workflow and equations.
+- [`docs/Plexcal_Methods_Theory_Parameter_Provenance.md`](docs/Plexcal_Methods_Theory_Parameter_Provenance.md) — methods, equations, parameter provenance, and limitations.
 
 The uploaded-file FRET implementation is a Python translation of `process_single_pdb_v1.m`. It uses 10,000 excitation trajectories with up to 1,000 transitions per trajectory. Results may differ from MATLAB because the implementations use different random-number streams.
 
-The standalone DET implementation is available in `det_code_clean.py`:
+The standalone DET implementation is available in `src/calcalculate_det_diffusion_lengths.py`:
 
 ```bash
-python det_code_clean.py "1TUB.pdb" 0
+python -m src.calcalculate_det_diffusion_lengths "1TUB.pdb"
 ```
 
 **Note:** Structure uploads and downloads are limited to 25 MiB. Uploaded structures must be selected again after refreshing the browser, while completed results remain available in the current browser tab.
