@@ -26,6 +26,6 @@ keywords:
   - kinetic Monte Carlo
   - energy migration
 abstract: >-
-  Plexcal is a structure-aware scientific software tool for estimating photo excitation
+  Plexcal is a structure-aware scientific software tool for estimating photoexcitation
   energy-transfer diffusion lengths from protein structures using implemented
   FRET- and Dexter-related models.
