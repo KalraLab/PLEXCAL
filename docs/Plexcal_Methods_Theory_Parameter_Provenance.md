@@ -25,9 +25,17 @@ Electronic excitation can migrate between chromophores by different mechanisms. 
 
 Kalra and collaborators developed this research direction for protein polymers, including microtubules and aromatic-residue networks; Kakati et al. extended the discussion to triplet-state energy migration in cytoskeletal polymers. These studies provide the principal scientific context for Plexcal’s singlet/FRET-like and triplet/DET-like model families. It identifies the residue chromophore sites from TRP, TYR, and PHE, builds distance matrices from their geometric centroids, estimates pairwise coupling/rate matrices, and simulates \(10^4\) photoexcitation trajectories. It defines the reported diffusion length as
 
-\[
-L_D = \frac{1}{N}\sum_{i=1}^{N}\left\|\mathbf r_{f,i}-\mathbf r_{0,i}\right\|,
-\]
+$$
+L_D
+=
+\frac{1}{N}
+\sum_{i=1}^{N}
+\left\|
+\mathbf{r}_{f,i}
+-
+\mathbf{r}_{0,i}
+\right\|,
+$$
 
 where \(N\) is the number of trajectories, and \(\mathbf r_{0,i}\) and \(\mathbf r_{f,i}\) are the initial and final chromophore positions. This endpoint-displacement definition follows the kinetic-hopping framework used in the cited Kalra-group/Kakati research; the precise code implementation is assessed separately in this document.
 
@@ -45,9 +53,13 @@ PDB coordinates are structural inputs, not photophysical measurements. A structu
 
 The reviewed scripts select residues labelled TRP, TYR, and PHE. For each selected residue, the scripts calculate the arithmetic mean of the coordinates of the atoms grouped into that residue and use that mean as the site position. Pairwise site distances are then calculated with the Euclidean metric:
 
-\[
-R_{ij}=\left\|\mathbf r_j-\mathbf r_i\right\|.
-\]
+$$
+R_{ij}
+=
+\left\|
+\mathbf{r}_j-\mathbf{r}_i
+\right\|.
+$$
 
 The published methods describe chromophore positions using aromatic-ring centroids (Kalra et al., 2023; Kakati et al., 2025). The code should not be claimed to implement precisely that operation for all calculations without qualification: the site-centroid calculation in the reviewed scripts averages the coordinates of all atoms assigned to the residue, whereas the FRET orientation calculation separately selects a set of aromatic ring atoms. If a ring-system centroid is intended for the distance matrix, the implementation should be changed and versioned accordingly.
 
@@ -61,17 +73,23 @@ The current parsers group atoms by residue name and residue number but do not re
 
 In the point-dipole approximation, the electronic coupling between donor \(D\) and acceptor \(A\) has the general distance and orientation dependence
 
-\[
-V_{DA}\propto \frac{\kappa\,\mu_D\mu_A}{n^2R_{DA}^{3}},
-\]
+$$
+V_{DA}\propto
+\frac{\kappa\,\mu_D\mu_A}{n^2R_{DA}^{3}},
+$$
 
 where \(R_{DA}\) is donor–acceptor separation, \(\mu_D\) and \(\mu_A\) are transition-dipole magnitudes, \(n\) is the refractive index of the medium, and \(\kappa\) is an orientation factor. The corresponding transfer rate in the dipole–dipole FRET regime scales approximately as \(R^{-6}\), provided the other photophysical terms remain fixed [2–4]. The Kalra-group literature describes dipole–dipole coupling, orientation dependence, and interaction-specific photophysical parameters; the exact mapping of the current script’s constants to the original supplementary tables still needs to be checked against the relevant Supporting Information.
 
 The reviewed FRET script estimates an orientation-related quantity from ring-plane normals. It obtains a normal vector for the selected aromatic ring atoms using singular-value decomposition and computes
 
-\[
-\kappa_{\mathrm{proxy}}=\mathbf n_i\cdot\mathbf n_j-3(\mathbf n_i\cdot\hat{\mathbf R}_{ij})(\mathbf n_j\cdot\hat{\mathbf R}_{ij}).
-\]
+$$
+\kappa_{\mathrm{proxy}}
+=
+\mathbf{n}_i\cdot\mathbf{n}_j
+-
+3\left(\mathbf{n}_i\cdot\hat{\mathbf{R}}_{ij}\right)
+\left(\mathbf{n}_j\cdot\hat{\mathbf{R}}_{ij}\right).
+$$
 
 It then calculates a dipole–dipole-like coupling from this quantity, fixed residue-type dipole magnitudes, the vacuum permittivity, and the centroid separation converted from Å to metres. The calculated energy in joules is converted to wavenumbers using the numerical factor \(5.03\times10^{22}\), which corresponds approximately to converting joules to cm\(^{-1}\) through \(1/(hc)\) when SI units are used.
 
@@ -81,20 +99,25 @@ It then calculates a dipole–dipole-like coupling from this quantity, fixed res
 
 The reviewed script calculates a rate-like matrix using the following expression (with the code's variable names):
 
-\[
-k_{ij}^{\mathrm{FRET,code}}=
+$$
+k_{ij}^{\mathrm{FRET,code}}
+=
 \frac{1}{c_{\mathrm{cm/s}}\,\hbar_{\mathrm{cm}}^2}
 \frac{1}{n^4}
-J_{ij}^{\mathrm{code}}\,V_{ij,\mathrm{cm}^{-1}}^2,
-\]
+J_{ij}^{\mathrm{code}}\,
+V_{ij,\mathrm{cm}^{-1}}^2,
+$$
 
 where the script uses `c = 3.0e10`, `hbar_cm = 5.29e-12`, `n = 1.4`, and the hard-coded pair-specific `j_values` dictionary. It converts the resulting values from s\(^{-1}\) to ns\(^{-1}\) by multiplying by \(10^{-9}\). This is a description of the code, not an endorsement that the equation is dimensionally or physically identical to a conventional Förster-rate expression. The exact units and definitions of the `j_values` must be documented from the original source before the rate can be considered fully traceable.
 
 The conventional Förster relationship is often expressed as
 
-\[
-k_{\mathrm{FRET}}=\frac{1}{\tau_D}\left(\frac{R_0}{R_{DA}}\right)^6,
-\]
+$$
+k_{\mathrm{FRET}}
+=
+\frac{1}{\tau_D}
+\left(\frac{R_0}{R_{DA}}\right)^6,
+$$
 
 where \(\tau_D\) is the donor excited-state lifetime and \(R_0\) is the Förster radius determined by the donor quantum yield, spectral overlap, orientation factor, and refractive index [2–4]. The reviewed script does **not** directly implement this equation with an explicitly calculated \(R_0\). Do not describe it as a direct implementation of the conventional \(R_0\)-based formula unless the code is revised or an algebraic equivalence is demonstrated.
 
@@ -102,11 +125,21 @@ where \(\tau_D\) is the donor excited-state lifetime and \(R_0\) is the Förster
 
 The FRET script currently uses the following fixed values:
 
-- Dipole magnitudes: TRP = 2.074 D, TYR = 1.18 D, PHE = 0.28 D.
-- Refractive index: 1.4.
-- Pair-specific `j_values`: TRP–TRP = \(5.5953\times10^{-6}\); TYR–TYR = \(4.7933\times10^{-4}\); PHE–PHE = \(6.1123\times10^{-4}\); TRP–TYR = \(2.3247\times10^{-5}\); TYR–TRP = \(9.2550\times10^{-4}\); PHE–TYR = 0.0043; PHE–TRP = 0.0039; TRP–PHE = \(1.3034\times10^{-7}\); TYR–PHE = \(1.8891\times10^{-5}\).
-- Decay lifetimes used by the FRET-labelled script: TRP = 3.6 ns, TYR = 7.5 ns, PHE = 3.39 ns; the script converts these to rates by taking their reciprocals.
-- Trajectory count: 10,000; maximum events per trajectory: 1,000.
+- **Dipole magnitudes:** TRP = 2.074 D, TYR = 1.18 D, PHE = 0.28 D.
+- **Refractive index:** \(n = 1.4\).
+- **Pair-specific `j_values`:**
+  - TRP–TRP = \(5.5953\times10^{-6}\)
+  - TYR–TYR = \(4.7933\times10^{-4}\)
+  - PHE–PHE = \(6.1123\times10^{-4}\)
+  - TRP–TYR = \(2.3247\times10^{-5}\)
+  - TYR–TRP = \(9.2550\times10^{-4}\)
+  - PHE–TYR = \(0.0043\)
+  - PHE–TRP = \(0.0039\)
+  - TRP–PHE = \(1.3034\times10^{-7}\)
+  - TYR–PHE = \(1.8891\times10^{-5}\)
+- **Decay lifetimes used by the FRET-labelled script:** TRP = 3.6 ns, TYR = 7.5 ns, PHE = 3.39 ns. The script converts these to rates by taking their reciprocals.
+- **Trajectory count:** 10,000.
+- **Maximum events per trajectory:** 1,000.
 
 **Parameter provenance status:** these exact values are visible in the supplied code. The supplied manuscript says the corresponding FRET parameters are reported in Supplementary Table S3, but that supplementary table was not included in the two supplied PDFs. It is therefore not yet verified that every listed code value, unit, directionality, and lifetime matches Table S3 or the cited source. The asymmetric pair-specific values are especially important to trace: do not silently symmetrise them or attribute them to a particular paper until the original table/source has been checked.
 
@@ -120,27 +153,33 @@ Dexter transfer is an exchange-mediated process requiring sufficient donor–acc
 
 The reviewed DET script computes a coupling proxy using
 
-\[
-V_{ij}^{\mathrm{DET,code}}(\mathrm{eV})=
+$$
+V_{ij}^{\mathrm{DET,code}}\,(\mathrm{eV})
+=
 \frac{3.22\times10^{-2}}{1.4\times1.4}
-\exp\left[-(10^{10}\times2.5579)\left(R_{ij,\mathrm m}-4.15\times10^{-10}\right)\right].
-\]
+\exp\left[
+-(10^{10}\times2.5579)
+\left(R_{ij,\mathrm{m}}-4.15\times10^{-10}\right)
+\right].
+$$
 
-The distance is supplied in metres. The result is then multiplied by \(1.602\times10^{-19}\) and \(5.03\times10^{22}\) to obtain the code's wavenumber-like coupling quantity in cm\(^{-1}\). The diagonal is set to zero after the exponential calculation.
+The distance is supplied in metres. The result is then multiplied by
+\(1.602\times10^{-19}\) and \(5.03\times10^{22}\) to obtain the code's
+wavenumber-like coupling quantity in \(\mathrm{cm}^{-1}\).
+The diagonal is set to zero after the exponential calculation.
 
 This expression is reproduced from the current script to make the implementation auditable. Its prefactor, exponent coefficient, reference distance, refractive-index-like divisor, and units need to be matched against the actual Supplementary Table S4 and the source cited for the empirical Dexter relation before they are described as literature-validated constants. The supplied main-text PDFs do not contain enough information to establish the full derivation of each numerical coefficient.
 
 ### 5.3 DET rate expression and parameters implemented
 
 The script calculates a rate-like matrix as
-
-\[
-k_{ij}^{\mathrm{DET,code}}=
+$$
+k_{ij}^{\mathrm{DET,code}} =
 \frac{1}{c_{\mathrm{cm/s}}\,\hbar_{\mathrm{cm}}^2}
 \,P_{ij}\,V_{ij,\mathrm{cm}^{-1}}^2,
-\]
+$$
 
-using `c = 3.0e10`, `hbar_cm = 5.29e-12`, and a fixed donor–acceptor transfer-parameter matrix \(P_{ij}\). The output is converted from s\(^{-1}\) to µs\(^{-1}\) by multiplying by \(10^{-6}\). The matrix is constructed from these values in `det_code_clean(1).py`:
+using \(c = 3.0\times10^{10}\), \(\hbar_{\mathrm{cm}} = 5.29\times10^{-12}\), and a fixed donor–acceptor transfer-parameter matrix \(P_{ij}\). The output is converted from \(\mathrm{s}^{-1}\) to \(\mathrm{\mu s}^{-1}\) by multiplying by \(10^{-6}\). The matrix is constructed from these values in `det_code_clean(1).py`:
 
 - TRP–TRP = 0.00058
 - TYR–TYR = 0.0012
@@ -190,3 +229,32 @@ Scientific software documentation should let a user trace each numerical value t
 
 Before tagging a release intended for DOI citation, obtain and archive the Supporting Information for the relevant Kalra-group and Kakati papers. Compare every constant and its unit against the original table and equation, then update this section with table number, row/column or parameter label, original units, conversion steps, and the code variable that receives the value. Where a constant is derived by the software rather than copied, document the derivation and dimensional analysis.
 
+## 9. References and methodological lineage
+
+The central scientific lineage for Plexcal is the work on electronic energy migration in protein polymers by A. P. Kalra and collaborators, together with Kakati et al.'s treatment of triplet energy migration. These are the principal research-context citations for the model family. The classic FRET and Dexter references below support the underlying physical theory; they are not claimed as the source of every implementation-specific numerical literal.
+
+1. Kalra, A. P.; Biswas, S.; Mulrain, I.; Wang, M.; Tuszynski, J. A.; Scholes, G. D. **All Lit Up: Exploring the Photophysical Properties of Protein Polymers.** *The Journal of Physical Chemistry Letters* **2023**, 14, 5891–5900. https://doi.org/10.1021/acs.jpclett.3c01032.  
+   *Core context for protein-polymer photophysics and electronic energy migration.*
+
+2. Kalra, A. P. et al. **Electronic Energy Migration in Microtubules.** *ACS Central Science* **2023**, 9, 352–361. https://doi.org/10.1021/acscentsci.2c01114.  
+   *Primary context for aromatic-residue-mediated energy migration in protein polymers and rate-based transport modelling.*
+
+3. Kakati, A.; Karmakar, T.; Kalra, A. P. **Triplet Energy Migration in Cytoskeletal Polymers.** *The Journal of Physical Chemistry B* **2025**, 129, 128–138. https://doi.org/10.1021/acs.jpcb.4c06748.  
+   *Principal source to consult for triplet-state migration and the DET-related model; exact parameter-to-code correspondence still requires Supporting Information verification.*
+
+4. Förster, T. **Zwischenmolekulare Energiewanderung und Fluoreszenz.** *Annalen der Physik* **1948**, 2, 55–75. https://doi.org/10.1002/andp.19484370105.  
+   *Foundational resonance energy-transfer theory.*
+
+5. Scholes, G. D. **Long-Range Resonance Energy Transfer in Molecular Systems.** *Annual Review of Physical Chemistry* **2003**, 54, 57–87. https://doi.org/10.1146/annurev.physchem.54.011002.103746.  
+   *Review of resonance energy-transfer theory.*
+
+6. Dexter, D. L. **A Theory of Sensitized Luminescence in Solids.** *The Journal of Chemical Physics* **1953**, 21, 836–850. https://doi.org/10.1063/1.1699044.  
+   *Foundational exchange-mediated energy-transfer theory.*
+
+7. Skourtis, S. S.; Liu, C.; Antoniou, P.; Virshup, A. M.; Beratan, D. N. **Dexter energy transfer pathways.** *Proceedings of the National Academy of Sciences* **2016**, 113, 8115–8120. https://doi.org/10.1073/pnas.1517189113.  
+   *Additional mechanistic context for Dexter transfer pathways.*
+
+8. Burley, S. K. et al. **Updated resources for exploring experimentally-determined PDB structures and Computed Structure Models at the RCSB Protein Data Bank.** *Nucleic Acids Research* **2025**, 53, D564–D574. RCSB PDB: https://www.rcsb.org/.  
+   *Structural data source; verify final journal metadata and DOI before release.*
+
+9. RCSB Protein Data Bank. **PDB archive and structure records.** https://www.rcsb.org/.

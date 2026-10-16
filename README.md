@@ -9,8 +9,8 @@ Plexcal is a structure-aware scientific application for estimating excitation en
 Clone the repository, install the dependencies, and start the server:
 
 ```bash
-git clone <repository-url>
-cd <repository-folder>
+git clone https://github.com/KalraLab/PLEXCAL.git
+cd PLEXCAL
 python -m pip install -r requirements.txt
 python server.py
 ```
