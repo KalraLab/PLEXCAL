@@ -1,7 +1,7 @@
 cff-version: 1.2.0
 message: >-
   If you use Plexcal, please cite this software using the metadata below.
-title: "Plexcal: Structure-Aware Estimation of Photo Excitation Energy-Transfer Diffusion Lengths"
+title: "Plexcal: Structure-Aware Estimation of PhotoExcitation Energy-Transfer Diffusion Lengths"
 type: software
 authors:
   - family-names: Bhavanam
