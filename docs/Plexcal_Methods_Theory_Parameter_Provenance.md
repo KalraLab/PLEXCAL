@@ -179,7 +179,7 @@ k_{ij}^{\mathrm{DET,code}} =
 \,P_{ij}\,V_{ij,\mathrm{cm}^{-1}}^2,
 $$
 
-using \(c = 3.0\times10^{10}\), \(\hbar_{\mathrm{cm}} = 5.29\times10^{-12}\), and a fixed donor–acceptor transfer-parameter matrix \(P_{ij}\). The output is converted from \(\mathrm{s}^{-1}\) to \(\mathrm{\mu s}^{-1}\) by multiplying by \(10^{-6}\). The matrix is constructed from these values in `det_code_clean(1).py`:
+using \(c = 3.0\times10^{10}\), \(\hbar_{\mathrm{cm}} = 5.29\times10^{-12}\), and a fixed donor–acceptor transfer-parameter matrix \(P_{ij}\). The output is converted from \(\mathrm{s}^{-1}\) to \(\mathrm{\mu s}^{-1}\) by multiplying by \(10^{-6}\). The matrix is constructed from these values in `calcalculate_det_diffusion_lengths.py`:
 
 - TRP–TRP = 0.00058
 - TYR–TYR = 0.0012
