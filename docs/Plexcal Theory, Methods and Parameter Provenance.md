@@ -40,15 +40,15 @@ These studies used purpose-built structures and parameter sets for particular po
 
 When the coupling between two chromophores is small compared with the energetic broadening of their transitions, the excitation stays localised on one site and transfer is a rate process. The rate from donor i to acceptor j follows the Fermi golden rule \[4,12,13\]:
 
-```latex
+$$
 k_{ij}=\frac{2\pi}{\hbar}\,\lvert V_{ij}\rvert^{2}\,J_{ij}\qquad(1)
-```
+$$
 
 where Vᵢⱼ is the electronic coupling and Jᵢⱼ is the spectral overlap integral of the area-normalised donor emission and acceptor absorption spectra on an energy scale \[4\]. Writing the coupling in wavenumbers, Ṽ = V/(hc), and the overlap on a wavenumber scale, J̃ (in cm), Eq. 1 becomes
 
-```latex
+
 k_{ij}=4\pi^{2}c\,\tilde V_{ij}^{2}\,\tilde J_{ij}\qquad(2)
-```
+
 
 with c in cm s⁻¹, which gives kᵢⱼ in s⁻¹. This is the form used in the implementation (Section 4).
 
@@ -56,13 +56,13 @@ with c in cm s⁻¹, which gives kᵢⱼ in s⁻¹. This is the form used in the
 
 For singlet transfer, the coupling is taken as the Coulomb interaction between transition dipoles, screened by the medium \[4,14\]:
 
-```latex
+$$
 V_{ij}=\frac{1}{4\pi\varepsilon_{0}n^{2}}\,\frac{\kappa_{ij}\,\mu_{i}\mu_{j}}{R_{ij}^{3}}\qquad(3)
-```
+$$
 
-```latex
+$$
 \kappa_{ij}=\hat{\mathbf u}_{i}\cdot\hat{\mathbf u}_{j}-3\,(\hat{\mathbf u}_{i}\cdot\hat{\mathbf R}_{ij})(\hat{\mathbf u}_{j}\cdot\hat{\mathbf R}_{ij})\qquad(4)
-```
+$$
 
 Here μᵢ and μⱼ are the transition-dipole magnitudes, û are unit vectors along the transition dipoles, Rᵢⱼ is the separation, R̂ᵢⱼ is the unit vector joining the sites, ε₀ is the vacuum permittivity and n is the refractive index of the surrounding medium, taken as 1.4 in \[4\]. Because k scales as V², the rate varies as R⁻⁶ for fixed orientation, which is the familiar Förster distance dependence \[10,12\]. In terms of a Förster radius R₀ this is k = (1/τ\_D)(R₀/R)⁶, where τ\_D is the donor lifetime.
 
@@ -70,9 +70,9 @@ Here μᵢ and μⱼ are the transition-dipole magnitudes, û are unit vectors a
 
 Triplet transfer is mediated by exchange and requires overlap of donor and acceptor orbitals. Its coupling therefore falls off much faster with distance than the dipole–dipole coupling and is commonly represented as an exponential \[11,15\]:
 
-```latex
+$$
 V_{ij}=V_{0}\exp\left[-\beta\,(R_{ij}-R_{0})\right]\qquad(5)
-```
+$$
 
 The rate is again given by Eq. 1 or 2, with an overlap factor appropriate to the triplet transition in place of Jᵢⱼ \[6\].
 
@@ -80,9 +80,9 @@ The rate is again given by Eq. 1 or 2, with an overlap factor appropriate to the
 
 Each site also has a decay channel with rate k\_dec,i = 1/τᵢ, where τᵢ is the excited-state lifetime assigned to the residue type. For an excitation at site i, the probability that the next event is a transfer to site j is
 
-```latex
+$$
 p_{ij}=\frac{k_{ij}}{\sum_{m\neq i}k_{im}+k_{\mathrm{dec},i}}\qquad(6)
-```
+$$
 
 and the probability that it decays is k\_dec,i divided by the same sum. Decay ends the trajectory.
 
@@ -92,9 +92,9 @@ In a kinetic Monte Carlo scheme the next event is chosen at random with probabil
 
 For N trajectories, with r₀,i the position of the starting site and r\_f,i the position of the site at which trajectory i ends, the diffusion length reported by Plexcal is
 
-```latex
+$$
 L_{D}=\frac{1}{N}\sum_{i=1}^{N}\left\lVert \mathbf r_{f,i}-\mathbf r_{0,i}\right\rVert\qquad(7)
-```
+$$
 
 This is a mean endpoint displacement. It is not the accumulated path length, and a trajectory that wanders away and returns contributes little. It is also a different quantity from the diffusion length L = √(4Dτ) that \[4\] obtains from a diffusion coefficient D and a lifetime τ by Stern–Volmer analysis, although both express how far an excitation travels before it is lost \[18\].
 
@@ -112,9 +112,9 @@ Plexcal reads fixed-column PDB records. Structures can be uploaded, or fetched b
 
 Residues named TRP, TYR and PHE are selected. Residues are identified by name and residue number. The position of each site is the arithmetic mean of the coordinates of all atoms of that residue present in the file, and the separation between sites is the Euclidean distance
 
-```latex
+$$
 R_{ij}=\lVert\mathbf r_{j}-\mathbf r_{i}\rVert\qquad(8)
-```
+$$
 
 A structure with fewer than two aromatic residues returns a diffusion length of zero.
 
@@ -124,9 +124,9 @@ The orientation vector of each residue is the normal to its aromatic ring. The r
 
 The vacuum dipole–dipole coupling is κᵢⱼ μᵢ μⱼ / (4π ε₀ Rᵢⱼ³), with Rᵢⱼ in metres and μ in C m, and it is converted to wavenumbers with the factor 5.03 × 10²² cm⁻¹ J⁻¹ (approximately 1/hc). The screening factor is applied in the rate, which is
 
-```latex
+$$
 k^{\mathrm{FRET}}_{ij}=\frac{1}{c\,\tilde\hbar^{2}}\,\frac{1}{n^{4}}\,J_{ij}\,\bigl(\tilde V^{\mathrm{vac}}_{ij}\bigr)^{2}\qquad(9)
-```
+$$
 
 with c = 3.0 × 10¹⁰ cm s⁻¹, ħ̃ = 5.29 × 10⁻¹² cm⁻¹ s and n = 1.4. The prefactor 1/(cħ̃²) equals 4π²c when ħ̃ = 1/(2πc), and n⁻⁴ Ṽ\_vac² equals (Ṽ\_vac/n²)², so Eq. 9 is Eq. 2 with the coupling of Eq. 3. The rounded value of ħ̃ makes the numerical prefactor 0.6% larger than 4π²c. Rates are converted to ns⁻¹.
 
@@ -134,15 +134,15 @@ with c = 3.0 × 10¹⁰ cm s⁻¹, ħ̃ = 5.29 × 10⁻¹² cm⁻¹ s and n = 1.
 
 The coupling is evaluated from Eq. 5 with the separation in metres:
 
-```latex
+$$
 V_{ij}\,(\mathrm{eV})=\frac{3.22\times10^{-2}}{n^{2}}\exp\left[-\beta\,(R_{ij}-R_{0})\right],\quad \beta=2.5579\ \text{\AA}^{-1},\ R_{0}=4.15\ \text{\AA},\ n=1.4\qquad(10)
-```
+$$
 
 The result is converted to cm⁻¹ with 1.602 × 10⁻¹⁹ J eV⁻¹ and 5.03 × 10²² cm⁻¹ J⁻¹, and the diagonal is set to zero. For this parameter set the coupling is about 1.6 × 10⁻² eV at R₀ and falls below 10⁻³ eV at a separation of about 5.2 Å, consistent in magnitude with the weak couplings described in \[6\]. The rate is
 
-```latex
+$$
 k^{\mathrm{DET}}_{ij}=\frac{1}{c\,\tilde\hbar^{2}}\,P_{ij}\,\tilde V_{ij}^{2}\qquad(11)
-```
+$$
 
 where Pᵢⱼ is a donor–acceptor overlap parameter that takes the place of Jᵢⱼ in Eq. 2. Rates are converted to μs⁻¹.
 
