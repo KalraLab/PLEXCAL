@@ -46,9 +46,9 @@ $$
 
 where Vᵢⱼ is the electronic coupling and Jᵢⱼ is the spectral overlap integral of the area-normalised donor emission and acceptor absorption spectra on an energy scale \[4\]. Writing the coupling in wavenumbers, Ṽ = V/(hc), and the overlap on a wavenumber scale, J̃ (in cm), Eq. 1 becomes
 
-
+$$
 k_{ij}=4\pi^{2}c\,\tilde V_{ij}^{2}\,\tilde J_{ij}\qquad(2)
-
+$$
 
 with c in cm s⁻¹, which gives kᵢⱼ in s⁻¹. This is the form used in the implementation (Section 4).
 
