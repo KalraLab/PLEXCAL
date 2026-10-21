@@ -90,7 +90,7 @@ Check the corresponding script's help output or documentation for any additional
 
 Methods, equations, parameter sources, implementation details, and known limitations are documented in:
 
-[`docs/Plexcal_Methods_Theory_Parameter_Provenance.md`](docs\Plexcal_Theory_Methods_Parameter_Provenance.md)
+[`docs/Plexcal_Methods_Theory_Parameter_Provenance.md`](docs\Plexcal_Methods_Theory_Parameter_Provenance.md)
 
 The uploaded-file FRET implementation is a Python translation of `process_single_pdb_v1.m`. It uses 10,000 excitation trajectories with up to 1,000 transitions per trajectory. Results may differ from MATLAB because the implementations use different random-number streams.
 
