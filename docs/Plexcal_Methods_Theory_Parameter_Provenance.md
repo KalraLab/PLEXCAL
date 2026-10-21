@@ -1,10 +1,18 @@
 # Plexcal: Theory, Methods and Parameter Provenance
 
-Dhanumjaya Reddy Bhavanam
+**Dhanumjaya Reddy Bhavanam¹, Kushal Singh Rawat¹, Aarat P. Kalra¹˒²˒³***
 
-Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi 110016, India
+¹ Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi 110016, India
 
-Software version 0.1.0 · October 2026 · Software methods documentation
+² Department of Biomedical Engineering, All India Institute of Medical Sciences, New Delhi, India
+
+³ Amar Nath and Shashi Khosla School of Information Technology, Indian Institute of Technology Delhi, New Delhi 110016, India
+
+*Corresponding author:* Aarat P. Kalra
+
+**Software version:** 0.1.0  
+**Release date:** October 2026  
+**Document:** Software Methods and Technical Documentation
 
 ## Abstract
 
