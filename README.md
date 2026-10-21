@@ -111,8 +111,8 @@ Consult the methods documentation before interpreting results or comparing struc
 If you use Plexcal in research, please cite the specific software release used in your analysis.
 
 **Software:** Plexcal: Structure-Aware Photoexcitation Energy-Transfer Diffusion lengths claculator in Protein system
-**Version:** [Release version]  
-**DOI:** [Version-specific DOI]  
+**Version:** v0.1.3  
+**DOI:** https://doi.org/10.5281/zenodo.23531409 
 **Repository:** https://github.com/KalraLab/PLEXCAL
 
 See `CITATION.cff` for machine-readable citation metadata.
