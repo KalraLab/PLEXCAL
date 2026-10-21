@@ -1,9 +1,12 @@
-
 cff-version: 1.2.0
-message: >-
-  If you use Plexcal, please cite this software using the metadata below.
+message: "If you use Plexcal, please cite this software as below."
+
 title: "Plexcal: Structure-Aware Estimation of Photoexcitation Energy-Transfer Diffusion Lengths"
 type: software
+version: 0.1.1
+
+date-released: 2026-10-21
+
 authors:
   - family-names: Bhavanam
     given-names: "Dhanumjaya Reddy"
@@ -12,16 +15,20 @@ authors:
 
   - family-names: Rawat
     given-names: "Kushal Singh"
-    orcid: "ADD-KUSHAL-ORCID-URL-HERE"
     affiliation: "Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi, India"
+    # Add ORCID after verification, if available.
 
   - family-names: Kalra
     given-names: "Aarat P."
     orcid: "https://orcid.org/0000-0002-1877-0439"
-    affiliation: "Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi, India; Amar Nath and Shashi Khosla School of Information Technology, Indian Institute of Technology Delhi, New Delhi, India; Department of Biomedical Engineering, All India Institute of Medical Sciences, New Delhi, India"
+    affiliation:
+      - "Centre for Biomedical Engineering, Indian Institute of Technology Delhi, New Delhi, India"
+      - "Amar Nath and Shashi Khosla School of Information Technology, Indian Institute of Technology Delhi, New Delhi, India"
+      - "Department of Biomedical Engineering, All India Institute of Medical Sciences, New Delhi, India"
     email: "aaratkalra@iitd.ac.in"
 
 repository-code: "https://github.com/KalraLab/PLEXCAL"
+
 license: "PolyForm-Noncommercial-1.0.0"
 
 keywords:
@@ -31,8 +38,18 @@ keywords:
   - protein structure
   - kinetic Monte Carlo
   - energy migration
+  - diffusion length
+  - computational biophysics
 
 abstract: >-
-  Plexcal is a structure-aware scientific software tool for estimating photoexcitation
-  energy-transfer diffusion lengths from protein structures using implemented
-  FRET- and Dexter-related models.
+  Plexcal is a structure-aware scientific software tool for estimating
+  photoexcitation energy-transfer diffusion lengths from protein structures
+  using implemented Förster resonance energy transfer (FRET) and
+  Dexter energy transfer (DET) models. The software supports structure
+  visualization, structure-based analysis, and batch processing of protein
+  structures.
+
+identifiers:
+  # Add the version-specific DOI after Zenodo publishes the record.
+  # - type: doi
+  #   value: "10.5281/zenodo.XXXXXXXX"
