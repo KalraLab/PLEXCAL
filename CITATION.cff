@@ -6,6 +6,7 @@ title: "Plexcal: Structure-Aware Estimation of Photoexcitation Energy-Transfer D
 type: software
 version: 0.1.3
 date-released: 2026-10-21
+doi: "10.5281/zenodo.23531409"
 
 authors:
   - family-names: Bhavanam
