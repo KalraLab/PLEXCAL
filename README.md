@@ -5,7 +5,7 @@
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: PolyForm Noncommercial](https://img.shields.io/badge/License-PolyForm--Noncommercial-blue.svg)](https://polyformproject.org/licenses/noncommercial/1.0.0/)
 [![Documentation](https://img.shields.io/badge/docs-GitHub-brightgreen.svg)](https://github.com/dhanumjayareddybhavanam/Plexcal)
-[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.23531409-blue.svg)](https://doi.org/10.5281/zenodo.23531409)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.23531409-blue.svg)](https://doi.org/10.5281/zenodo.24280420)
 
 Plexcal is a structure-aware scientific application for estimating Photoexcitation energy-transfer diffusion lengths using implemented Förster resonance energy transfer (FRET) and Dexter energy transfer (DET) models.
 
@@ -117,7 +117,7 @@ If you use Plexcal in research, please cite the specific software release used i
 
 **Software:** Plexcal: Structure-Aware Photoexcitation Energy-Transfer Diffusion lengths claculator in Protein system
 **Version:** v0.1.3  
-**DOI:** https://doi.org/10.5281/zenodo.23531409 
+**DOI:** https://doi.org/10.5281/zenodo.24280420   
 **Repository:** https://github.com/KalraLab/PLEXCAL
 
 See `CITATION.cff` for machine-readable citation metadata.

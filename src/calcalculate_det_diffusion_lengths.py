@@ -1,5 +1,3 @@
-"""Python translation of det_code_clean.m."""
-
 from __future__ import annotations
 
 import argparse
@@ -30,11 +28,20 @@ MAX_TIME_STEPS = 1_000
 
 def _read_pdb_atoms(
     pdb_filename: str | Path,
-) -> list[tuple[str, int, str, float, float, float]]:
+) -> list[tuple[str, str, int, str, str, float, float, float]]:
+    """Read atoms from PDB or mmCIF while preserving residue identity.
+
+    Both PDB and mmCIF inputs retain chain ID and insertion-code identity so
+    residues with the same sequence number in different chains are not merged.
+    """
+    path = Path(pdb_filename)
+    suffix = path.suffix.lower()
+    if suffix in {".cif", ".mmcif"}:
+        return _read_mmcif_atoms(path)
+
     atoms = []
     saw_model = False
-
-    with Path(pdb_filename).open("r", encoding="ascii", errors="replace") as pdb_file:
+    with path.open("r", encoding="ascii", errors="replace") as pdb_file:
         for line in pdb_file:
             record = line[0:6].strip().upper()
             if record == "MODEL":
@@ -48,48 +55,138 @@ def _read_pdb_atoms(
                 break
             if record not in {"ATOM", "HETATM"}:
                 continue
-
             try:
                 atom_name = line[12:16].strip()
-                residue_name = line[17:20].strip()
+                residue_name = line[17:20].strip().upper()
+                chain_id = line[21:22].strip()
                 residue_number = int(line[22:26].strip())
+                insertion_code = line[26:27].strip()
                 x = float(line[30:38].strip())
                 y = float(line[38:46].strip())
                 z = float(line[46:54].strip())
             except (ValueError, IndexError) as error:
                 raise ValueError(f"Invalid PDB atom record: {line.rstrip()}") from error
-
-            atoms.append((residue_name, residue_number, atom_name, x, y, z))
-
+            # Preserve PDB chain and insertion code, matching the mmCIF reader.
+            atoms.append((residue_name, chain_id, residue_number, insertion_code, atom_name, x, y, z))
     return atoms
 
 
+def _cif_value(value: str) -> str:
+    """Normalize CIF null markers to an empty string."""
+    return "" if value in {".", "?"} else value
+
+
+def _read_mmcif_atoms(
+    cif_filename: str | Path,
+) -> list[tuple[str, str, int, str, str, float, float, float]]:
+    """Read the first model from an mmCIF atom_site loop using standard fields."""
+    import shlex
+
+    lines = Path(cif_filename).read_text(encoding="utf-8", errors="replace").splitlines()
+    atoms: list[tuple[str, str, int, str, str, float, float, float]] = []
+    i = 0
+    while i < len(lines):
+        if lines[i].strip().lower() != "loop_":
+            i += 1
+            continue
+        i += 1
+        headers: list[str] = []
+        while i < len(lines) and lines[i].lstrip().startswith("_"):
+            headers.append(lines[i].strip().split()[0].lower())
+            i += 1
+        if not headers or not any(h.startswith("_atom_site.") for h in headers):
+            continue
+
+        header_index = {name: idx for idx, name in enumerate(headers)}
+        def column(*names: str) -> int | None:
+            for name in names:
+                if name.lower() in header_index:
+                    return header_index[name.lower()]
+            return None
+
+        idx_group = column("_atom_site.group_pdb")
+        idx_atom = column("_atom_site.auth_atom_id", "_atom_site.label_atom_id")
+        idx_comp = column("_atom_site.auth_comp_id", "_atom_site.label_comp_id")
+        idx_chain = column("_atom_site.auth_asym_id", "_atom_site.label_asym_id")
+        idx_seq = column("_atom_site.auth_seq_id", "_atom_site.label_seq_id")
+        idx_ins = column("_atom_site.pdbx_pdb_ins_code")
+        idx_x = column("_atom_site.cartn_x")
+        idx_y = column("_atom_site.cartn_y")
+        idx_z = column("_atom_site.cartn_z")
+        idx_model = column("_atom_site.pdbx_pdb_model_num")
+        required = {"atom": idx_atom, "residue": idx_comp, "sequence": idx_seq,
+                    "x": idx_x, "y": idx_y, "z": idx_z}
+        missing = [name for name, idx in required.items() if idx is None]
+        if missing:
+            raise ValueError(f"mmCIF atom_site loop missing required columns: {', '.join(missing)}")
+
+        token_buffer: list[str] = []
+        first_model: str | None = None
+        while i < len(lines):
+            stripped = lines[i].strip()
+            lower = stripped.lower()
+            if not stripped or stripped.startswith("#"):
+                i += 1
+                continue
+            if lower == "loop_" or lower.startswith("data_") or lower.startswith("save_") or stripped.startswith("_"):
+                break
+            try:
+                row_tokens = shlex.split(stripped, comments=True, posix=True)
+            except ValueError as error:
+                raise ValueError(f"Could not parse mmCIF row: {stripped}") from error
+            token_buffer.extend(row_tokens)
+            while len(token_buffer) >= len(headers):
+                row = token_buffer[:len(headers)]
+                del token_buffer[:len(headers)]
+                if idx_group is not None and row[idx_group].upper() not in {"ATOM", "HETATM"}:
+                    continue
+                model = _cif_value(row[idx_model]) if idx_model is not None else "1"
+                if first_model is None:
+                    first_model = model
+                if model != first_model:
+                    continue
+                try:
+                    residue_name = _cif_value(row[idx_comp]).upper()
+                    atom_name = _cif_value(row[idx_atom])
+                    chain_id = _cif_value(row[idx_chain]) if idx_chain is not None else ""
+                    residue_number = int(_cif_value(row[idx_seq]))
+                    insertion_code = _cif_value(row[idx_ins]) if idx_ins is not None else ""
+                    x = float(row[idx_x]); y = float(row[idx_y]); z = float(row[idx_z])
+                except (ValueError, IndexError) as error:
+                    raise ValueError(f"Invalid mmCIF atom_site row: {' '.join(row)}") from error
+                atoms.append((residue_name, chain_id, residue_number, insertion_code, atom_name, x, y, z))
+            i += 1
+        # A partial row indicates malformed atom_site data rather than a valid structure.
+        if token_buffer:
+            raise ValueError("Incomplete row in mmCIF atom_site loop")
+        return atoms
+    raise ValueError("No mmCIF atom_site loop found")
+
+
 def _group_residues(
-    atoms: list[tuple[str, int, str, float, float, float]],
+    atoms: list[tuple[str, str, int, str, str, float, float, float]],
 ) -> tuple[list[str], list[tuple[list[str], np.ndarray]]]:
     residue_types: list[str] = []
     groups: list[tuple[list[str], np.ndarray]] = []
 
     for residue_type in RESIDUE_TYPES:
-        matching_atoms = [
-            atom for atom in atoms if residue_type in atom[0].upper()
-        ]
-        residue_numbers = sorted({atom[1] for atom in matching_atoms})
-
-        for residue_number in residue_numbers:
+        matching_atoms = [atom for atom in atoms if residue_type in atom[0].upper()]
+        # Use chain ID, residue number, and insertion code for both PDB and
+        # mmCIF so equivalent residue numbers in different chains stay distinct.
+        residue_keys = sorted({(atom[1], atom[2], atom[3]) for atom in matching_atoms},
+                              key=lambda key: (key[0], key[1], key[2]))
+        for chain_id, residue_number, insertion_code in residue_keys:
             residue_atoms = [
-                atom for atom in matching_atoms if atom[1] == residue_number
+                atom for atom in matching_atoms
+                if (atom[1], atom[2], atom[3]) == (chain_id, residue_number, insertion_code)
             ]
-            atom_names = [atom[2] for atom in residue_atoms]
+            atom_names = [atom[4] for atom in residue_atoms]
             coordinates = np.asarray(
-                [[atom[3], atom[4], atom[5]] for atom in residue_atoms],
-                dtype=float,
+                [[atom[5], atom[6], atom[7]] for atom in residue_atoms], dtype=float
             ).reshape((-1, 3))
             residue_types.append(residue_type)
             groups.append((atom_names, coordinates))
-
     return residue_types, groups
-
 
 def _mean_omit_nan(values: np.ndarray) -> np.ndarray:
     means = np.empty(values.shape[1], dtype=float)
@@ -314,9 +411,9 @@ def process_single_pdb(
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Calculate the DET diffusion length for one PDB structure."
+        description="Calculate the DET diffusion length for one PDB or mmCIF structure."
     )
-    parser.add_argument("pdb_filename", help="Input PDB file")
+    parser.add_argument("pdb_filename", help="Input PDB (.pdb) or mmCIF (.cif/.mmcif) file")
     # parser.add_argument(
     #     "microtubule_diameter_angstrom",
     #     type=float,

@@ -63,7 +63,7 @@ function finiteValue(value) {
         : null;
 }
 
-function formatMetric(value, digits = 3) {
+function formatMetric(value, digits = 1) {
     const number = finiteValue(value);
     return number === null ? "—" : number.toLocaleString(undefined, {
         minimumFractionDigits: digits,
@@ -497,7 +497,7 @@ function displayAnalysis(payload) {
 
 function methodFailureMessage(error) {
     if (typeof error === "string" && /aromatic|TRP|TYR|PHE|coordinates/i.test(error)) {
-        return `could not be calculated because supported aromatic-ring (TRP, TYR, or PHE) atoms and coordinates could not be identified. Check that the PDB contains complete coordinates for these residues.`;
+        return `could not be calculated because supported aromatic-ring (TRP, TYR, or PHE) atoms and coordinates could not be identified. Check that the structure file contains complete coordinates for these residues.`;
     }
     return typeof error === "string" && error.trim()
         ? `could not be calculated. ${error}`
@@ -748,12 +748,12 @@ function calculationFailureMessage(payload, status) {
         ].filter(([, error]) => typeof error === "string" && error.trim());
         const errorDetails = methodErrors.map(([, error]) => error);
         if (errorDetails.some((error) => /aromatic|TRP|TYR|PHE|coordinates/i.test(error))) {
-            return "Plexcal couldn't identify supported aromatic rings (TRP, TYR, or PHE) with the atom coordinates needed for this structure. Check that the PDB contains complete aromatic-residue coordinates, or try another structure.";
+            return "Plexcal couldn't identify supported aromatic rings (TRP, TYR, or PHE) with the atom coordinates needed for this structure. Check that the structure file contains complete aromatic-residue coordinates, or try another structure.";
         }
         if (methodErrors.length) {
             return `Plexcal could not calculate ${methodErrors.map(([method]) => method).join(" and ")} for this structure. ${errorDetails.join(" ")}`;
         }
-        return "Plexcal could not calculate FRET and DET for this structure. Check that the PDB contains valid aromatic-residue coordinates, then try again.";
+        return "Plexcal could not calculate FRET and DET for this structure. Check that the structure file contains valid aromatic-residue coordinates, then try again.";
     }
     return payload.error || `Calculation failed with HTTP ${status}.`;
 }
@@ -896,7 +896,7 @@ fileInput.addEventListener("change", () => {
         return;
     }
     clearAnalysis();
-    setStatus("PDB file changed. Previous analysis cleared.");
+    setStatus("Structure file changed. Previous analysis cleared.");
     try {
         validateSelectedUpload(file);
         if (activeUploadUrl) {

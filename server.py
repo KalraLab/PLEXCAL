@@ -15,7 +15,7 @@ from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parent
 STATIC_ROOT = ROOT / "src"
-MAX_PDB_UPLOAD_BYTES = 25 * 1024 * 1024
+MAX_STRUCTURE_UPLOAD_BYTES = 25 * 1024 * 1024
 COHERENT_PAIR_METRICS = (
     "diffusion_length_angstrom",
     "total_pairs",
@@ -27,6 +27,25 @@ NUMERICAL_FIELDS = {
     "DET_Diffusion_Length_Angstroms",
     "TaxID",
 }
+
+
+def _calculation_suffix(filename):
+    suffix = Path(filename).suffix.lower()
+    if suffix in {".pdb", ".ent"}:
+        return ".pdb"
+    if suffix in {".cif", ".mmcif"}:
+        return suffix
+    raise ValueError("Choose a .pdb, .ent, .cif, or .mmcif structure file.")
+
+
+def _has_structure_records(structure_bytes, suffix):
+    if suffix in {".cif", ".mmcif"}:
+        contents = structure_bytes.lower()
+        return b"loop_" in contents and b"_atom_site." in contents
+    return any(
+        line.startswith((b"ATOM  ", b"HETATM"))
+        for line in structure_bytes.splitlines()
+    )
 
 
 def _download_structure(source, identifier):
@@ -96,8 +115,8 @@ def _download_structure(source, identifier):
         structure_url, headers={"User-Agent": "Plexcal/1.0"}
     )
     with urlopen(structure_request, timeout=60) as response:
-        pdb_bytes = response.read(MAX_PDB_UPLOAD_BYTES + 1)
-    if len(pdb_bytes) > MAX_PDB_UPLOAD_BYTES:
+        pdb_bytes = response.read(MAX_STRUCTURE_UPLOAD_BYTES + 1)
+    if len(pdb_bytes) > MAX_STRUCTURE_UPLOAD_BYTES:
         raise ValueError("The downloaded PDB file exceeds the 25 MiB limit.")
     if not any(
         line.startswith((b"ATOM  ", b"HETATM")) for line in pdb_bytes.splitlines()
@@ -388,16 +407,16 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
             return
 
         if content_length <= 0:
-            self.send_json(400, {"error": "Upload a non-empty PDB file."})
+            self.send_json(400, {"error": "Upload a non-empty structure file."})
             return
-        if content_length > MAX_PDB_UPLOAD_BYTES + 1024 * 1024:
+        if content_length > MAX_STRUCTURE_UPLOAD_BYTES + 1024 * 1024:
             self.send_json(413, {"error": "The upload exceeds the 25 MiB limit."})
             return
         if not self.headers.get("Content-Type", "").lower().startswith(
             "multipart/form-data"
         ):
             self.send_json(
-                415, {"error": "Upload the PDB file as multipart form data."}
+                415, {"error": "Upload the structure file as multipart form data."}
             )
             return
 
@@ -449,22 +468,24 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
             if not pdb_bytes:
                 self.send_json(400, {"error": "The selected file is empty."})
                 return
-            if len(pdb_bytes) > MAX_PDB_UPLOAD_BYTES:
+            if len(pdb_bytes) > MAX_STRUCTURE_UPLOAD_BYTES:
                 self.send_json(
-                    413, {"error": "The PDB file must be 25 MiB or smaller."}
-                )
-                return
-            if not any(
-                line.startswith((b"ATOM  ", b"HETATM"))
-                for line in pdb_bytes.splitlines()
-            ):
-                self.send_json(
-                    400, {"error": "The uploaded file has no PDB atom records."}
+                    413, {"error": "The structure file must be 25 MiB or smaller."}
                 )
                 return
             original_name = Path(
                 upload_part.get_filename() or "uploaded.pdb"
             ).name
+            try:
+                structure_suffix = _calculation_suffix(original_name)
+            except ValueError as error:
+                self.send_json(400, {"error": str(error)})
+                return
+            if not _has_structure_records(pdb_bytes, structure_suffix):
+                self.send_json(
+                    400, {"error": "The uploaded file has no valid structure atom records."}
+                )
+                return
             identifier = original_name
         elif source in {"rcsb", "alphafold"}:
             if upload_part is not None:
@@ -479,6 +500,7 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
                 pdb_bytes, identifier, original_name = _download_structure(
                     source, identifier
                 )
+                structure_suffix = _calculation_suffix(original_name)
             except ValueError as error:
                 self.send_json(400, {"error": str(error)})
                 return
@@ -494,7 +516,7 @@ class PDBRequestHandler(SimpleHTTPRequestHandler):
         temporary_path = None
         try:
             with tempfile.NamedTemporaryFile(
-                prefix="pdb-calculation-", suffix=".pdb", delete=False
+                prefix="structure-calculation-", suffix=structure_suffix, delete=False
             ) as temporary_file:
                 temporary_file.write(pdb_bytes)
                 temporary_path = Path(temporary_file.name)
