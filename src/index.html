@@ -55,14 +55,14 @@
 
                     <label for="structureSource">Source</label>
                     <select id="structureSource" name="inputSource">
-                        <option value="upload">Upload a PDB file</option>
+                        <option value="upload">Upload a PDB/CIF file</option>
                         <option value="rcsb">RCSB Protein Data Bank</option>
                         <option value="alphafold">AlphaFold Protein Structure Database</option>
                     </select>
 
                     <div id="uploadSourceFields">
-                        <label for="pdbFile">PDB coordinate file</label>
-                        <input type="file" id="pdbFile" name="pdbFile" accept=".pdb,.ent">
+                        <label for="pdbFile">PDB/CIF coordinate file</label>
+                        <input type="file" id="pdbFile" name="pdbFile" accept=".pdb,.ent,.cif,.mmcif">
                     </div>
                     <div id="identifierSourceFields" class="hidden">
                         <label for="structureIdentifier" id="structureIdentifierLabel">RCSB PDB ID</label>

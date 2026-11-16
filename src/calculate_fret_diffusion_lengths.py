@@ -14,8 +14,11 @@ import sys
 from pathlib import Path
 
 import numpy as np
+from Bio.PDB.MMCIF2Dict import MMCIF2Dict
 from scipy.linalg import svd
 from scipy.spatial.distance import cdist
+
+CIF_SUPPORT_VERSION = "2026-10-23-chain-aware-residue-reader-v3"
 
 
 RING_ATOMS = {
@@ -26,8 +29,10 @@ RING_ATOMS = {
 
 
 def _read_pdb_atoms(pdb_filename: str | Path) -> list[tuple[str, int, str, float, float, float]]:
-    """Read the first PDB model in the fixed-column format used by pdbread."""
+    """Read the first PDB model, assigning a unique internal ID to each chain/residue."""
     atoms = []
+    residue_ids = {}
+    next_residue_id = 1
     saw_model = False
     inside_first_model = True
 
@@ -49,17 +54,98 @@ def _read_pdb_atoms(pdb_filename: str | Path) -> list[tuple[str, int, str, float
 
             try:
                 atom_name = line[12:16].strip()
-                residue_name = line[17:20].strip()
-                residue_number = int(line[22:26].strip())
+                residue_name = line[17:20].strip().upper()
+                chain_id = line[21:22].strip()
+                raw_residue_number = line[22:26].strip()
+                insertion_code = line[26:27].strip()
                 x = float(line[30:38].strip())
                 y = float(line[38:46].strip())
                 z = float(line[46:54].strip())
+                residue_key = (chain_id, raw_residue_number, insertion_code, residue_name)
+                if residue_key not in residue_ids:
+                    residue_ids[residue_key] = next_residue_id
+                    next_residue_id += 1
+                residue_number = residue_ids[residue_key]
             except (ValueError, IndexError) as error:
                 raise ValueError(f"Invalid PDB atom record: {line.rstrip()}") from error
 
             atoms.append((residue_name, residue_number, atom_name, x, y, z))
 
     return atoms
+
+
+def _read_mmcif_atoms(cif_filename: str | Path) -> list[tuple[str, int, str, float, float, float]]:
+    """Read mmCIF atom records, preserving chain/residue identity with internal IDs."""
+    data = MMCIF2Dict(str(cif_filename))
+
+    def get_column(*names, required=True):
+        for name in names:
+            values = data.get(name)
+            if values is not None:
+                if not isinstance(values, list):
+                    values = [values]
+                return values
+        if required:
+            raise ValueError(f"Missing required mmCIF atom-site column: {names[0]}")
+        return None
+
+    groups = get_column("_atom_site.group_PDB")
+    residue_names = get_column("_atom_site.auth_comp_id", "_atom_site.label_comp_id")
+    atom_names = get_column("_atom_site.auth_atom_id", "_atom_site.label_atom_id")
+    residue_numbers = get_column("_atom_site.auth_seq_id", "_atom_site.label_seq_id")
+    chain_ids = get_column("_atom_site.auth_asym_id", "_atom_site.label_asym_id", required=False)
+    insertion_codes = get_column("_atom_site.pdbx_PDB_ins_code", required=False)
+    x_values = get_column("_atom_site.Cartn_x")
+    y_values = get_column("_atom_site.Cartn_y")
+    z_values = get_column("_atom_site.Cartn_z")
+    model_values = get_column("_atom_site.pdbx_PDB_model_num", required=False)
+    if model_values is None:
+        model_values = ["1"] * len(groups)
+    if chain_ids is None:
+        chain_ids = [""] * len(groups)
+    if insertion_codes is None:
+        insertion_codes = ["."] * len(groups)
+
+    atoms = []
+    first_model = model_values[0] if model_values else "1"
+    residue_ids = {}
+    next_residue_id = 1
+
+    for index, record in enumerate(groups):
+        if str(record).upper() not in {"ATOM", "HETATM"}:
+            continue
+        if index < len(model_values) and str(model_values[index]) != str(first_model):
+            continue
+        try:
+            residue_name = str(residue_names[index]).upper()
+            raw_residue_number = str(residue_numbers[index])
+            chain_id = str(chain_ids[index]) if index < len(chain_ids) else ""
+            insertion_code = str(insertion_codes[index]) if index < len(insertion_codes) else "."
+            x = float(x_values[index])
+            y = float(y_values[index])
+            z = float(z_values[index])
+            residue_key = (chain_id, raw_residue_number, insertion_code, residue_name)
+            if residue_key not in residue_ids:
+                residue_ids[residue_key] = next_residue_id
+                next_residue_id += 1
+            residue_number = residue_ids[residue_key]
+        except (ValueError, IndexError) as error:
+            raise ValueError(
+                f"Invalid mmCIF atom-site record at row {index + 1}"
+            ) from error
+        atoms.append((residue_name, residue_number, str(atom_names[index]), x, y, z))
+
+    return atoms
+
+
+def _read_structure_atoms(filename: str | Path) -> list[tuple[str, int, str, float, float, float]]:
+    """Read coordinates from PDB or mmCIF while preserving chain/residue boundaries."""
+    suffix = Path(filename).suffix.lower()
+    if suffix in {".cif", ".mmcif"}:
+        return _read_mmcif_atoms(filename)
+    if suffix == ".pdb":
+        return _read_pdb_atoms(filename)
+    raise ValueError(f"Unsupported structure format: {Path(filename).suffix}")
 
 
 def _matlab_residue_groups(atoms, residue_name):
@@ -137,27 +223,30 @@ def _calculate_ring_normals(groups, types, positions_xyz):
 
 def process_single_pdb(
     pdb_filename,
-    # microtubule_diameter_angstrom,
     *,
     random_seed: int | None = None,
 ):
-    """Return diffusion length and coherent-pair metrics for one PDB structure."""
+    """Return diffusion length and coherent-pair metrics for one PDB/mmCIF structure."""
     result = {
         "diffusion_length_angstrom": float("nan"),
         "total_pairs": float("nan"),
         "coherent_pairs": float("nan"),
         "coherent_pair_fraction": None,
     }
-    try:
-        # These values are intentionally computed but unused in the MATLAB code.
-        # microtubule_diameter = float(microtubule_diameter_angstrom)
-        # microtubule_radius = microtubule_diameter / 2.0
-        # del microtubule_radius
 
-        atoms = _read_pdb_atoms(pdb_filename)
+    try:
+        # Structure-aware reader preserves chain/residue identity for PDB and mmCIF.
+        atoms = _read_structure_atoms(pdb_filename)
         if not atoms:
+            print(
+                f"WARNING: {pdb_filename}: reader parsed 0 atom records; returning 0.0.",
+                file=sys.stderr,
+            )
             result.update(
-                diffusion_length_angstrom=0.0, total_pairs=0, coherent_pairs=0
+                diffusion_length_angstrom=0.0,
+                total_pairs=0,
+                coherent_pairs=0,
+                coherent_pair_fraction=None,
             )
             return result
 
@@ -172,11 +261,24 @@ def process_single_pdb(
             for group in groups_by_type[residue_type]
         ]
         number_of_molecules = len(type_groups)
+        total_pairs = number_of_molecules * (number_of_molecules - 1) // 2
+
         if number_of_molecules < 2:
+            counts = {
+                residue_type: len(groups_by_type[residue_type])
+                for residue_type in residue_names
+            }
+            print(
+                f"WARNING: {pdb_filename}: parsed {len(atoms)} atom records, "
+                f"but found only {number_of_molecules} aromatic residues {counts}; "
+                "the existing calculation returns 0.0 for fewer than two.",
+                file=sys.stderr,
+            )
             result.update(
-                total_pairs=number_of_molecules * (number_of_molecules - 1) // 2,
                 diffusion_length_angstrom=0.0,
+                total_pairs=total_pairs,
                 coherent_pairs=0,
+                coherent_pair_fraction=0.0 if total_pairs else None,
             )
             return result
 
@@ -218,7 +320,8 @@ def process_single_pdb(
                 / distances_matrix_m**3
             )
             coupling_cm_minus_1 = coupling_joules * (5.03e22)
-            total_pairs = number_of_molecules * (number_of_molecules - 1) // 2
+
+            # Metrics retained from the working Plexcal copy.
             lower_triangle = np.tril(
                 np.ones(coupling_cm_minus_1.shape, dtype=bool), k=-1
             )
@@ -230,14 +333,19 @@ def process_single_pdb(
             result.update(
                 total_pairs=total_pairs,
                 coherent_pairs=coherent_pairs,
-                coherent_pair_fraction=coherent_pairs / total_pairs,
+                coherent_pair_fraction=(
+                    coherent_pairs / total_pairs if total_pairs > 0 else None
+                ),
             )
+
+            # Keep the new structure-aware version's FRET rate calculation unchanged.
             fermi_rates_per_second = (
                 1.0
                 / (3.0e10 * (5.29e-12) ** 2)
                 * (1.0 / 1.4**4)
                 * (j_matrix * coupling_cm_minus_1**2)
             )
+
         fermi_rates_per_ns = fermi_rates_per_second * 1e-9
         fermi_rates_per_ns[~np.isfinite(fermi_rates_per_ns)] = 0.0
         radiative_rates_per_ns = np.asarray(
@@ -250,8 +358,7 @@ def process_single_pdb(
         rng = np.random.default_rng(random_seed)
         distances_travelled = np.zeros(10_000, dtype=float)
 
-        # Keep MATLAB's nested loop order: finish one excitation before
-        # drawing the next starting molecule.
+        # Keep the new version's Monte Carlo loop and stopping rules unchanged.
         for excitation in range(10_000):
             starting_molecule = int(rng.integers(number_of_molecules))
             current_molecule = starting_molecule
@@ -278,6 +385,7 @@ def process_single_pdb(
 
         result["diffusion_length_angstrom"] = float(np.mean(distances_travelled))
         return result
+
     except Exception as error:
         print(f"Error processing {pdb_filename}: {error}", file=sys.stderr)
         return result

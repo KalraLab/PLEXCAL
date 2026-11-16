@@ -588,6 +588,20 @@ function structureViewerUrl(source, identifier) {
     return `/api/structure?${query}`;
 }
 
+function getStructureFormat(filename) {
+    const name = String(filename || "").toLowerCase();
+
+    if (/\.(cif|mmcif)$/.test(name)) {
+        return "mmcif";
+    }
+
+    if (/\.(pdb|ent)$/.test(name)) {
+        return "pdb";
+    }
+
+    throw new Error(`Unsupported structure format: ${filename}`);
+}
+
 async function openStructureViewer(source, identifier, uploadedFile = null) {
     const sequence = ++viewerLoadSequence;
     const structureKey = `${source}:${source === "upload" ? activeUploadUrl : identifier}`;
@@ -611,7 +625,7 @@ async function openStructureViewer(source, identifier, uploadedFile = null) {
         );
         const isAlphaFold = source === "alphafold";
         const options = {
-            customData: { url: pdbUrl, format: "pdb", binary: false },
+            customData: { url: pdbUrl, format: source === "upload" ? getStructureFormat(uploadedFile?.name || identifier) : "pdb", binary: false },
             alphafoldView: isAlphaFold,
             sequencePanel: true,
             hideControls: false,
@@ -692,13 +706,23 @@ async function fetchStructureText(url) {
 
 function validateSelectedUpload(file) {
     if (!file) {
-        throw new Error("Choose a PDB file first.");
+        throw new Error("Choose a PDB or CIF/mmCIF structure file first.");
     }
+
     if (file.size === 0) {
-        throw new Error("The selected file is empty.");
+        throw new Error("The selected structure file is empty.");
     }
+
     if (file.size > maximumPdbBytes) {
-        throw new Error("The PDB file must be 25 MiB or smaller.");
+        throw new Error("The structure file must be 25 MiB or smaller.");
+    }
+
+    const filename = file.name.toLowerCase();
+
+    if (!/\.(pdb|ent|cif|mmcif)$/.test(filename)) {
+        throw new Error(
+            "Unsupported format. Choose a .pdb, .ent, .cif, or .mmcif file."
+        );
     }
 }
 
