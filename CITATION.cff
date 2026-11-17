@@ -5,7 +5,7 @@ message: "If you use Plexcal, please cite this software using the metadata below
 title: "Plexcal: Structure-Aware Estimation of Photoexcitation Energy-Transfer Diffusion Lengths"
 type: software
 version: 0.1.4
-date-released: 2026-10-21
+date-released: 2026-11-16
 doi: "10.5281/zenodo.24280420"
 
 authors:
